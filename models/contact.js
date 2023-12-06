@@ -1,10 +1,14 @@
+require('dotenv').config();
+
+const PORT = process.env.PORT
+const URL = process.env.MONGODB_URI
+
 const mongoose = require('mongoose')
 
 mongoose.set('strictQuery', false)
 
-const url = process.env.MONGODB_URI
 console.log('connecting to database...')
-mongoose.connect(url)
+mongoose.connect(URL)
   .then(result => {
         console.log('connected to MongoDB')  
     })  
@@ -15,7 +19,7 @@ mongoose.connect(url)
 
 const contactSchema = new mongoose.Schema({
   name: String,
-  number: Boolean,
+  number: String,
 })
 
 contactSchema.set('toJSON', {

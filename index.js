@@ -1,10 +1,8 @@
 require('dotenv').config();
 
 const PORT = process.env.PORT
-const URL = process.env.MONGODB_URI
 
-const Contact = require('./models/contact')
-const mongoose = require('mongoose');
+const database = require('./database')
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -44,7 +42,7 @@ let contacts = [
 ]
 
 app.get('/api/persons', (request, response) => {
-    Contact.find({})
+    database.fetchAllContacts()
         .then(contacts => {
             response.json(contacts)
         })
@@ -55,13 +53,16 @@ app.get('/api/persons', (request, response) => {
 }) 
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const contact = contacts.find(contact => contact.id === id)
-    if (contact) {
-        response.json(contact)
-    } else {
-        response.status(404).end()
-    }
+    const id = request.params.id
+    console.log(id)
+    database.fetchContactById(id)
+        .then(contact => {
+            response.json(contact)
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(404).end()
+        })
 })
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -71,11 +72,13 @@ app.delete('/api/persons/:id', (request, response) => {
     response.status(204).end()
 })
 
+// Add contact
 app.post('/api/persons', (request, response) => {
     const body = request.body
     const name = body.name
     const number = body.number
 
+    // Check parameters
     if (!name) {
         return response.status(400).json({ 
             error: 'name missing' 
@@ -100,9 +103,16 @@ app.post('/api/persons', (request, response) => {
         id: Math.floor(Math.random() * 1000000)
     }
 
-    contacts = contacts.concat(contact)
-
-    response.json(contact)
+    // Add contact to database
+    database.addContact(contact)
+        .then(contact => {
+            response.json(contact)
+            contacts = contacts.concat(contact)
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(404).end()
+        })
 })
 
 app.get('/info', (request, response) => {
