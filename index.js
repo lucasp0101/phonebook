@@ -1,5 +1,10 @@
-const PORT = 3001;
+require('dotenv').config();
 
+const PORT = process.env.PORT
+const URL = process.env.MONGODB_URI
+
+const Contact = require('./models/contact')
+const mongoose = require('mongoose');
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -39,7 +44,14 @@ let contacts = [
 ]
 
 app.get('/api/persons', (request, response) => {
-    response.json(contacts)
+    Contact.find({})
+        .then(contacts => {
+            response.json(contacts)
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(404).end()
+        })
 }) 
 
 app.get('/api/persons/:id', (request, response) => {
