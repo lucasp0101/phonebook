@@ -17,7 +17,7 @@ app.use(morgan('tiny'));
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 })
-
+/*
 let contacts = [
     { 
         name: "Arto Hellas", 
@@ -39,7 +39,7 @@ let contacts = [
         number: "39-23-6423122",
         id: 4
     }
-]
+]*/
 
 app.get('/api/persons', (request, response) => {
     database.fetchAllContacts()
@@ -52,12 +52,32 @@ app.get('/api/persons', (request, response) => {
         })
 }) 
 
+// Get contact by id
 app.get('/api/persons/:id', (request, response) => {
     const id = request.params.id
     console.log(id)
     database.fetchContactById(id)
         .then(contact => {
-            response.json(contact)
+            // If the contact exists, return it, else return 404
+            if (contact) {
+                response.json(contact)
+            }
+            response.status(404).end()
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(500).end()
+        })
+})
+
+// Delete contact by id
+app.delete('/api/persons/:id', (request, response) => {
+    const id = request.params.id
+
+    // Delete contact from database
+    database.deleteContact(id)
+        .then(() => {
+            response.status(204).end()
         })
         .catch(error => {
             console.log(error)
@@ -65,14 +85,7 @@ app.get('/api/persons/:id', (request, response) => {
         })
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    contacts = contacts.filter(contact => contact.id !== id)
-
-    response.status(204).end()
-})
-
-// Add contact
+// Add/Update contact
 app.post('/api/persons', (request, response) => {
     const body = request.body
     const name = body.name
@@ -91,11 +104,13 @@ app.post('/api/persons', (request, response) => {
         })
     }
 
+    /*
     if (contacts.find(contact => contact.name === name)) {
         return response.status(400).json({ 
             error: 'contact already present' 
         })
     }
+    */
 
     const contact = {
         name: name,
@@ -112,6 +127,36 @@ app.post('/api/persons', (request, response) => {
         .catch(error => {
             console.log(error)
             response.status(404).end()
+        })
+})
+
+app.put('/api/persons/:id', (request, response) => {
+    const id = request.params.id
+    const body = request.body
+    const name = body.name
+    const number = body.number
+
+    // Check parameters
+    if (!name) {
+        return response.status(400).json({ 
+            error: 'name missing' 
+        })
+    }
+
+    if (!number) {
+        return response.status(400).json({ 
+            error: 'number missing' 
+        })
+    }
+
+    // Update contact in database
+    database.updateContact(id, name, number)
+        .then(() => {
+            response.status(200).end()
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(500).end()
         })
 })
 
